@@ -49,6 +49,31 @@ public class StreakLeaderboardEntry
     public string Username { get; set; } = string.Empty;
 }
 
+public class GlobalLeaderboardByPlayerEntry
+{
+    public string PeriodType { get; set; } = string.Empty;
+    public string PeriodId { get; set; } = string.Empty;
+    public Guid PlayerId { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public int RankScore { get; set; }
+}
+
+public class WinsLeaderboardByPlayerEntry
+{
+    public string Category { get; set; } = string.Empty;
+    public Guid PlayerId { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public int GamesWon { get; set; }
+}
+
+public class StreakLeaderboardByPlayerEntry
+{
+    public string Category { get; set; } = string.Empty;
+    public Guid PlayerId { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public int LongestStreak { get; set; }
+}
+
 // =====================================================
 // DTOs (Data Transfer Objects for API)
 // =====================================================

@@ -40,11 +40,46 @@ public class LeaderboardService : ILeaderboardService
 
     public async Task AddOrUpdateGlobalLeaderboardAsync(string periodType, string periodId, Guid playerId, string username, int rankScore)
     {
-        var cql = @"
-            INSERT INTO global_leaderboard (period_type, period_id, rank_score, player_id, username) 
-            VALUES (?, ?, ?, ?, ?)";
+        var existing = await GetGlobalLeaderboardByPlayerAsync(periodType, periodId, playerId);
 
-        await _cassandra.ExecuteAsync(cql, periodType, periodId, rankScore, playerId, username);
+        if (existing != null && existing.RankScore != rankScore)
+        {
+            var cql = @"
+                BEGIN BATCH
+                DELETE FROM global_leaderboard
+                WHERE period_type = ? AND period_id = ? AND rank_score = ? AND player_id = ?;
+
+                INSERT INTO global_leaderboard (period_type, period_id, rank_score, player_id, username)
+                VALUES (?, ?, ?, ?, ?);
+
+                INSERT INTO global_leaderboard_by_player (period_type, period_id, player_id, username, rank_score)
+                VALUES (?, ?, ?, ?, ?);
+            APPLY BATCH;";
+
+            await _cassandra.ExecuteAsync(
+                cql,
+                periodType, periodId, existing.RankScore, playerId,
+                periodType, periodId, rankScore, playerId, username,
+                periodType, periodId, playerId, username, rankScore
+            );
+
+            return;
+        }
+
+        var upsert = @"
+            BEGIN BATCH
+            INSERT INTO global_leaderboard (period_type, period_id, rank_score, player_id, username)
+            VALUES (?, ?, ?, ?, ?);
+
+            INSERT INTO global_leaderboard_by_player (period_type, period_id, player_id, username, rank_score)
+            VALUES (?, ?, ?, ?, ?);
+        APPLY BATCH;";
+
+        await _cassandra.ExecuteAsync(
+            upsert,
+            periodType, periodId, rankScore, playerId, username,
+            periodType, periodId, playerId, username, rankScore
+        );
     }
 
     // =====================================================
@@ -74,11 +109,45 @@ public class LeaderboardService : ILeaderboardService
 
     public async Task AddOrUpdateWinsLeaderboardAsync(string category, Guid playerId, string username, int gamesWon)
     {
-        var cql = @"
-            INSERT INTO leaderboard_by_wins (category, games_won, player_id, username) 
-            VALUES (?, ?, ?, ?)";
+        var existing = await GetWinsLeaderboardByPlayerAsync(category, playerId);
 
-        await _cassandra.ExecuteAsync(cql, category, gamesWon, playerId, username);
+        if (existing != null && existing.GamesWon != gamesWon)
+        {
+            var cql = @"
+                BEGIN BATCH
+                DELETE FROM leaderboard_by_wins WHERE category = ? AND games_won = ? AND player_id = ?;
+
+                INSERT INTO leaderboard_by_wins (category, games_won, player_id, username) 
+                VALUES (?, ?, ?, ?);
+
+                INSERT INTO leaderboard_by_wins_by_player (category, player_id, username, games_won)
+                VALUES (?, ?, ?, ?);
+            APPLY BATCH;";
+
+            await _cassandra.ExecuteAsync(
+                cql,
+                category, existing.GamesWon, playerId,
+                category, gamesWon, playerId, username,
+                category, playerId, username, gamesWon
+            );
+
+            return;
+        }
+
+        var upsert = @"
+            BEGIN BATCH
+            INSERT INTO leaderboard_by_wins (category, games_won, player_id, username) 
+            VALUES (?, ?, ?, ?);
+
+            INSERT INTO leaderboard_by_wins_by_player (category, player_id, username, games_won)
+            VALUES (?, ?, ?, ?);
+        APPLY BATCH;";
+
+        await _cassandra.ExecuteAsync(
+            upsert,
+            category, gamesWon, playerId, username,
+            category, playerId, username, gamesWon
+        );
     }
 
     // =====================================================
@@ -180,10 +249,74 @@ public class LeaderboardService : ILeaderboardService
 
     public async Task AddOrUpdateStreakLeaderboardAsync(string category, Guid playerId, string username, int longestStreak)
     {
-        var cql = @"
-            INSERT INTO leaderboard_by_longest_streak (category, longest_streak, player_id, username) 
-            VALUES (?, ?, ?, ?)";
+        var existing = await GetStreakLeaderboardByPlayerAsync(category, playerId);
 
-        await _cassandra.ExecuteAsync(cql, category, longestStreak, playerId, username);
+        if (existing != null && existing.LongestStreak != longestStreak)
+        {
+            var cql = @"
+                BEGIN BATCH
+                DELETE FROM leaderboard_by_longest_streak WHERE category = ? AND longest_streak = ? AND player_id = ?;
+
+                INSERT INTO leaderboard_by_longest_streak (category, longest_streak, player_id, username) 
+                VALUES (?, ?, ?, ?);
+
+                INSERT INTO leaderboard_by_longest_streak_by_player (category, player_id, username, longest_streak)
+                VALUES (?, ?, ?, ?);
+            APPLY BATCH;";
+
+            await _cassandra.ExecuteAsync(
+                cql,
+                category, existing.LongestStreak, playerId,
+                category, longestStreak, playerId, username,
+                category, playerId, username, longestStreak
+            );
+
+            return;
+        }
+
+        var upsert = @"
+            BEGIN BATCH
+            INSERT INTO leaderboard_by_longest_streak (category, longest_streak, player_id, username) 
+            VALUES (?, ?, ?, ?);
+
+            INSERT INTO leaderboard_by_longest_streak_by_player (category, player_id, username, longest_streak)
+            VALUES (?, ?, ?, ?);
+        APPLY BATCH;";
+
+        await _cassandra.ExecuteAsync(
+            upsert,
+            category, longestStreak, playerId, username,
+            category, playerId, username, longestStreak
+        );
+    }
+
+    private Task<GlobalLeaderboardByPlayerEntry?> GetGlobalLeaderboardByPlayerAsync(string periodType, string periodId, Guid playerId)
+    {
+        var cql = @"
+            SELECT period_type, period_id, player_id, username, rank_score
+            FROM global_leaderboard_by_player
+            WHERE period_type = ? AND period_id = ? AND player_id = ?";
+
+        return _cassandra.QueryFirstOrDefaultAsync<GlobalLeaderboardByPlayerEntry>(cql, periodType, periodId, playerId);
+    }
+
+    private Task<WinsLeaderboardByPlayerEntry?> GetWinsLeaderboardByPlayerAsync(string category, Guid playerId)
+    {
+        var cql = @"
+            SELECT category, player_id, username, games_won
+            FROM leaderboard_by_wins_by_player
+            WHERE category = ? AND player_id = ?";
+
+        return _cassandra.QueryFirstOrDefaultAsync<WinsLeaderboardByPlayerEntry>(cql, category, playerId);
+    }
+
+    private Task<StreakLeaderboardByPlayerEntry?> GetStreakLeaderboardByPlayerAsync(string category, Guid playerId)
+    {
+        var cql = @"
+            SELECT category, player_id, username, longest_streak
+            FROM leaderboard_by_longest_streak_by_player
+            WHERE category = ? AND player_id = ?";
+
+        return _cassandra.QueryFirstOrDefaultAsync<StreakLeaderboardByPlayerEntry>(cql, category, playerId);
     }
 }

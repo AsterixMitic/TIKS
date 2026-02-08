@@ -60,6 +60,7 @@ public class RedisGameStateRepository : IGameStateRepository
         await _redis.KeyDeleteAsync(key);
         await _redis.SetRemoveAsync(OpenGamesKey, gameId);
         await _redis.SetRemoveAsync(PlayingGamesKey, gameId);
+        await _redis.SetRemoveAsync(PausedGamesKey, gameId);
 
         _logger.LogDebug("Removed game {GameId} from Redis", gameId);
     }

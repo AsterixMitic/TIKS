@@ -119,26 +119,32 @@ public class LeaderboardSnapshotService : BackgroundService
                     }
 
                     // 4. Update Global Leaderboard
-                    if (stats.TotalPoints > 0)
+                    var monthlyPoints = await GetMonthlyPointsAsync(cassandra, currentMonth, stats.PlayerId);
+                    if (monthlyPoints > 0)
                     {
-                        // Monthly
                         await leaderboardService.AddOrUpdateGlobalLeaderboardAsync(
                             GameConstants.LeaderboardPeriodTypeMonthly,
                             currentMonth,
                             stats.PlayerId,
                             player.Username,
-                            (int)stats.TotalPoints
+                            (int)monthlyPoints
                         );
+                    }
 
-                        // Yearly
+                    var yearlyPoints = await GetYearlyPointsAsync(cassandra, currentYear, stats.PlayerId);
+                    if (yearlyPoints > 0)
+                    {
                         await leaderboardService.AddOrUpdateGlobalLeaderboardAsync(
                             GameConstants.LeaderboardPeriodTypeYearly,
                             currentYear,
                             stats.PlayerId,
                             player.Username,
-                            (int)stats.TotalPoints
+                            (int)yearlyPoints
                         );
+                    }
 
+                    if (stats.TotalPoints > 0)
+                    {
                         // All-time
                         await leaderboardService.AddOrUpdateGlobalLeaderboardAsync(
                             GameConstants.LeaderboardPeriodTypeAllTime,
@@ -164,5 +170,30 @@ public class LeaderboardSnapshotService : BackgroundService
             _logger.LogError(ex, "Error updating leaderboards");
             throw;
         }
+    }
+
+    private class PointsCounterRow
+    {
+        public long TotalPoints { get; set; }
+    }
+
+    private static async Task<long> GetMonthlyPointsAsync(ICassandraService cassandra, string yearMonth, Guid playerId)
+    {
+        var row = await cassandra.QueryFirstOrDefaultAsync<PointsCounterRow>(
+            "SELECT total_points FROM monthly_leaderboard WHERE year_month = ? AND player_id = ?",
+            yearMonth, playerId
+        );
+
+        return row?.TotalPoints ?? 0;
+    }
+
+    private static async Task<long> GetYearlyPointsAsync(ICassandraService cassandra, string year, Guid playerId)
+    {
+        var row = await cassandra.QueryFirstOrDefaultAsync<PointsCounterRow>(
+            "SELECT total_points FROM yearly_leaderboard WHERE year = ? AND player_id = ?",
+            year, playerId
+        );
+
+        return row?.TotalPoints ?? 0;
     }
 }

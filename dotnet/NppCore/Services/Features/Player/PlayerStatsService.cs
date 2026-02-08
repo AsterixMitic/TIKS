@@ -35,9 +35,11 @@ public class PlayerStatsService : IPlayerStatsService
         int winnerScore,
         Guid loserId,
         string loserUsername,
-        int loserScore)
+        int loserScore,
+        Guid matchId,
+        DateTimeOffset matchTime)
     {
-        var now = DateTimeOffset.UtcNow;
+        var now = matchTime;
         var currentMonth = $"{now.Year}-{now.Month:D2}";
         var currentYear = $"{now.Year}";
         long winnerPoints = winnerScore * GameConstants.PointsPerScore;
@@ -59,6 +61,27 @@ public class PlayerStatsService : IPlayerStatsService
                 "UPDATE player_stats SET total_points = total_points + ?, games_lost = games_lost + 1 WHERE player_id = ?",
                 loserPoints, loserId
             );
+
+            // Update monthly and yearly points counters
+            await _cassandra.ExecuteAsync(
+                "UPDATE monthly_leaderboard SET total_points = total_points + ? WHERE year_month = ? AND player_id = ?",
+                winnerPoints, currentMonth, winnerId
+            );
+
+            await _cassandra.ExecuteAsync(
+                "UPDATE monthly_leaderboard SET total_points = total_points + ? WHERE year_month = ? AND player_id = ?",
+                loserPoints, currentMonth, loserId
+            );
+
+            await _cassandra.ExecuteAsync(
+                "UPDATE yearly_leaderboard SET total_points = total_points + ? WHERE year = ? AND player_id = ?",
+                winnerPoints, currentYear, winnerId
+            );
+
+            await _cassandra.ExecuteAsync(
+                "UPDATE yearly_leaderboard SET total_points = total_points + ? WHERE year = ? AND player_id = ?",
+                loserPoints, currentYear, loserId
+            );
             
             _logger.LogInformation("Updated player_stats for winner {WinnerId} and loser {LoserId}", winnerId, loserId);
         }
@@ -75,15 +98,15 @@ public class PlayerStatsService : IPlayerStatsService
             var matchScore = $"{winnerScore}:{loserScore}";
 
             await _cassandra.ExecuteAsync(
-                @"INSERT INTO player_matches (player_id, year, match_time, opponent_id, opponent_username, score, result) 
-                  VALUES (?, ?, ?, ?, ?, ?, 'WIN')",
-                winnerId, year, now, loserId, loserUsername, matchScore
+                @"INSERT INTO player_matches (player_id, year, match_time, match_id, opponent_id, opponent_username, score, result) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, 'WIN')",
+                winnerId, year, now, matchId, loserId, loserUsername, matchScore
             );
 
             await _cassandra.ExecuteAsync(
-                @"INSERT INTO player_matches (player_id, year, match_time, opponent_id, opponent_username, score, result) 
-                  VALUES (?, ?, ?, ?, ?, ?, 'LOSS')",
-                loserId, year, now, winnerId, winnerUsername, matchScore
+                @"INSERT INTO player_matches (player_id, year, match_time, match_id, opponent_id, opponent_username, score, result) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, 'LOSS')",
+                loserId, year, now, matchId, winnerId, winnerUsername, matchScore
             );
             
             _logger.LogInformation("Saved match history for {Winner} vs {Loser}", winnerId, loserId);
@@ -149,15 +172,50 @@ public class PlayerStatsService : IPlayerStatsService
             );
         }
 
-        // Global leaderboard (for all players with points)
+        var monthlyPoints = await GetMonthlyPointsAsync(currentMonth, playerId);
+        if (monthlyPoints > 0)
+        {
+            await _leaderboardService.AddOrUpdateGlobalLeaderboardAsync(
+                GameConstants.LeaderboardPeriodTypeMonthly, currentMonth, playerId, username, (int)monthlyPoints);
+        }
+
+        var yearlyPoints = await GetYearlyPointsAsync(currentYear, playerId);
+        if (yearlyPoints > 0)
+        {
+            await _leaderboardService.AddOrUpdateGlobalLeaderboardAsync(
+                GameConstants.LeaderboardPeriodTypeYearly, currentYear, playerId, username, (int)yearlyPoints);
+        }
+
+        // All-time leaderboard (from player_stats)
         if (playerStats.TotalPoints > 0)
         {
             await _leaderboardService.AddOrUpdateGlobalLeaderboardAsync(
-                GameConstants.LeaderboardPeriodTypeMonthly, currentMonth, playerId, username, (int)playerStats.TotalPoints);
-            await _leaderboardService.AddOrUpdateGlobalLeaderboardAsync(
-                GameConstants.LeaderboardPeriodTypeYearly, currentYear, playerId, username, (int)playerStats.TotalPoints);
-            await _leaderboardService.AddOrUpdateGlobalLeaderboardAsync(
                 GameConstants.LeaderboardPeriodTypeAllTime, GameConstants.LeaderboardPeriodAllTime, playerId, username, (int)playerStats.TotalPoints);
         }
+    }
+
+    private class PointsCounterRow
+    {
+        public long TotalPoints { get; set; }
+    }
+
+    private async Task<long> GetMonthlyPointsAsync(string yearMonth, Guid playerId)
+    {
+        var row = await _cassandra.QueryFirstOrDefaultAsync<PointsCounterRow>(
+            "SELECT total_points FROM monthly_leaderboard WHERE year_month = ? AND player_id = ?",
+            yearMonth, playerId
+        );
+
+        return row?.TotalPoints ?? 0;
+    }
+
+    private async Task<long> GetYearlyPointsAsync(string year, Guid playerId)
+    {
+        var row = await _cassandra.QueryFirstOrDefaultAsync<PointsCounterRow>(
+            "SELECT total_points FROM yearly_leaderboard WHERE year = ? AND player_id = ?",
+            year, playerId
+        );
+
+        return row?.TotalPoints ?? 0;
     }
 }

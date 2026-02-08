@@ -44,11 +44,12 @@ CREATE TABLE IF NOT EXISTS player_matches (
     player_id uuid,
     year text,                    -- npr. "2026"
     match_time timestamp,
+    match_id uuid,
     opponent_id uuid,
     opponent_username text,       -- denormalizacija radi brzine
     score text,                   -- npr. "11:7"
     result text,                  -- WIN / LOSS
-    PRIMARY KEY ((player_id, year), match_time)
+    PRIMARY KEY ((player_id, year), match_time, match_id)
 ) WITH CLUSTERING ORDER BY (match_time DESC);
 
 -- =====================================================
@@ -72,6 +73,16 @@ CREATE TABLE IF NOT EXISTS monthly_leaderboard (
 );
 
 -- =====================================================
+-- YEARLY LEADERBOARD (statistika po godini)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS yearly_leaderboard (
+    year text,                    -- npr. "2026"
+    player_id uuid,
+    total_points counter,
+    PRIMARY KEY (year, player_id)
+);
+
+-- =====================================================
 -- GLOBAL LEADERBOARD (po periodima)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS global_leaderboard (
@@ -84,6 +95,18 @@ CREATE TABLE IF NOT EXISTS global_leaderboard (
 ) WITH CLUSTERING ORDER BY (rank_score DESC);
 
 -- =====================================================
+-- GLOBAL LEADERBOARD BY PLAYER (lookup for updates)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS global_leaderboard_by_player (
+    period_type text,
+    period_id text,
+    player_id uuid,
+    username text,
+    rank_score int,
+    PRIMARY KEY ((period_type, period_id), player_id)
+);
+
+-- =====================================================
 -- WINS LEADERBOARD (po broju pobeda)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS leaderboard_by_wins (
@@ -93,6 +116,17 @@ CREATE TABLE IF NOT EXISTS leaderboard_by_wins (
     username text,
     PRIMARY KEY (category, games_won, player_id)
 ) WITH CLUSTERING ORDER BY (games_won DESC);
+
+-- =====================================================
+-- WINS LEADERBOARD BY PLAYER (lookup for updates)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS leaderboard_by_wins_by_player (
+    category text,
+    player_id uuid,
+    username text,
+    games_won int,
+    PRIMARY KEY ((category), player_id)
+);
 
 -- =====================================================
 -- PLAYER CURRENT STREAK (trenutni streak igrača)
@@ -115,6 +149,17 @@ CREATE TABLE IF NOT EXISTS leaderboard_by_longest_streak (
     username text,
     PRIMARY KEY (category, longest_streak, player_id)
 ) WITH CLUSTERING ORDER BY (longest_streak DESC);
+
+-- =====================================================
+-- LONGEST STREAK BY PLAYER (lookup for updates)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS leaderboard_by_longest_streak_by_player (
+    category text,
+    player_id uuid,
+    username text,
+    longest_streak int,
+    PRIMARY KEY ((category), player_id)
+);
 
 CREATE TABLE recent_matches (
     period text,                 -- "2024-01" 

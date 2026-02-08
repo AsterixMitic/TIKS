@@ -18,6 +18,8 @@ public interface IPlayerStatsService
         int winnerScore,
         Guid loserId,
         string loserUsername,
-        int loserScore
+        int loserScore,
+        Guid matchId,
+        DateTimeOffset matchTime
     );
 }
