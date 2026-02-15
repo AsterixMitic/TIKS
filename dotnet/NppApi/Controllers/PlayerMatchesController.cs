@@ -41,7 +41,7 @@ public class PlayerMatchesController : ControllerBase
 
         var matches= await _playerMatchesService.GetByYearAsync(year,playerId,page,limit);
 
-        var respone= matches.Select(match=>new PlayerMatchesResponse(match.PlayerId, match.OpponentUsername,match.Score, match.Result,match.Match_time));
+        var respone= matches.Select(match=>new PlayerMatchesResponse(match.PlayerId, match.OpponentUsername, match.Result, match.Score, match.Match_time));
 
         return Ok(respone);
     }

@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts: ['00c6-87-116-134-30.ngrok-free.app'],
+    allowedHosts: ['00c6-87-116-134-30.ngrok-free.app', 'npp-frontend'],
     proxy: {
       '/gamehub': {
         target: 'http://npp-backend:8080',

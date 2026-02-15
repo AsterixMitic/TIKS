@@ -1,5 +1,7 @@
 @echo off
 echo Loading test data into Cassandra...
-docker exec -i cassandra cqlsh < test-podaci.sql
+pushd ..\..\docker
+docker compose exec -T cassandra cqlsh < ..\dotnet\NppCore\test-podaci.sql
+popd
 echo Done!
 pause

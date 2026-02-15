@@ -1,0 +1,10 @@
+{
+  "NPP_FRONTEND_URL": "http://npp-frontend:5173",
+  "NPP_BACKEND_URL": "http://npp-backend:8080",
+  "NPP_PW_ARTIFACTS_DIR": "playwright-artifacts",
+  "NPP_PW_HEADLESS": true,
+  "NPP_PW_SLOWMO_MS": 500,
+  "NPP_PW_COLOR_SCHEME": "dark",
+  "NPP_PW_VIEWPORT_WIDTH": 1280,
+  "NPP_PW_VIEWPORT_HEIGHT": 720
+}

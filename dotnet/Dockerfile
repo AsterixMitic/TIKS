@@ -5,6 +5,8 @@ WORKDIR /app
 COPY *.slnx ./
 COPY NppCore/*.csproj ./NppCore/
 COPY NppApi/*.csproj ./NppApi/
+COPY NppTests/NppApi.ComponentTests/*.csproj ./NppTests/NppApi.ComponentTests/
+COPY NppTests/Npp.PlaywrightTests/*.csproj ./NppTests/Npp.PlaywrightTests/
 
 RUN dotnet restore
 
