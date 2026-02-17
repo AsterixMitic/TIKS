@@ -6,6 +6,7 @@ namespace Npp.PlaywrightTests.Api;
 
 [TestFixture]
 [NonParallelizable]
+[Category("Api")]
 public class BackendApiTests
 {
     private IPlaywright _playwright = null!;

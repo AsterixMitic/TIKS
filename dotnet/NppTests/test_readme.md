@@ -2,48 +2,41 @@
 
 ## 1. Sta postoji u NppTests
 
-- `NppApi.ComponentTests/` - NUnit komponentni testovi backend kontrolera
+- `NppApi.ComponentTests/` - NUnit komponentni testovi (kontroleri + servisi)
 - `Npp.PlaywrightTests/` - Playwright API i E2E testovi
 
 ## 2. Preduslovi
 
 - Docker Desktop mora da radi
-- Servisi iz `docker/docker-compose.yml` treba da budu podignuti (backend, frontend, cassandra, redis)
-- Cassandra schema treba da bude ucitana (`dotnet/NppCore/Db/schema.cql`)
+- `.env` fajl u `docker/` folderu (videti `docker/.env.example`)
 
-Napomena:
-- Ako schema nije ucitana, registracija/login testovi mogu da padaju.
+## 3. Automatsko pokretanje svih testova (PREPORUCENO)
 
-## 2.1 Playwright podesavanja preko `.env` (preporuceno)
-
-`TestSettings.cs` sada ucitava vrednosti ovim redosledom:
-1. environment varijable (`-e KEY=VALUE`)
-2. `.env` fajl
-3. hardcoded default vrednosti
-
-Primer `.env` fajla:
+Jedna komanda pokrece celu infrastrukturu, ucitava semu i pokrece sve testove:
 
 ```powershell
-copy dotnet\NppTests\Npp.PlaywrightTests\.env.example dotnet\NppTests\Npp.PlaywrightTests\.env
+cd docker
+docker compose --profile test up --build --abort-on-container-exit npp-tests
 ```
 
-Najvaznije promenljive:
-- `NPP_PW_SLOWMO_MS` (npr. `300`, `700`, `1000`)
-- `NPP_PW_COLOR_SCHEME` (`dark`, `light`, `no-preference`)
-- `NPP_PW_HEADLESS` (`true` ili `false`)
-- `NPP_FRONTEND_URL`
-- `NPP_BACKEND_URL`
-- `NPP_PW_VIEWPORT_WIDTH`, `NPP_PW_VIEWPORT_HEIGHT`
-- `NPP_TEST_ENV_FILE` (opciono: apsolutna putanja do drugog `.env` fajla)
+Ovo automatski:
+1. Pokrece Cassandra, Redis, backend i frontend
+2. Ceka da Cassandra bude zdrava
+3. Ucitava Cassandra semu (`schema.cql`)
+4. Ceka da backend bude spreman
+5. Pokrece komponentne testove (unit)
+6. Pokrece Playwright API testove
+7. Pokrece Playwright E2E testove (Chromium je vec instaliran u image-u)
 
-Podrazumevano:
-- `slowMo=300`
-- `colorScheme=dark`
-- `headless=true`
+Zaustavljanje posle testova:
 
-## 3. Preporuceno pokretanje testova (bez posebnog test image-a)
+```powershell
+docker compose --profile test down -v
+```
 
-Pokretanje iz `docker/` foldera.
+## 4. Rucno pokretanje pojedinacnih testova
+
+Ako vec imate infrastrukturu pokrenutu (`docker compose up -d`):
 
 Komponentni testovi:
 
@@ -57,7 +50,7 @@ Playwright API testovi:
 docker compose exec -e NPP_BACKEND_URL=http://localhost:8080 npp-backend dotnet test /app/NppTests/Npp.PlaywrightTests/Npp.PlaywrightTests.csproj --filter "FullyQualifiedName~Api"
 ```
 
-Playwright E2E testovi (prvi put):
+Playwright E2E testovi (prvi put zahteva instalaciju Chromium-a):
 
 ```powershell
 docker compose exec npp-backend dotnet build /app/NppTests/Npp.PlaywrightTests/Npp.PlaywrightTests.csproj
@@ -65,6 +58,21 @@ docker compose exec npp-backend pwsh /app/NppTests/Npp.PlaywrightTests/bin/Debug
 docker compose exec npp-backend pwsh /app/NppTests/Npp.PlaywrightTests/bin/Debug/net10.0/playwright.ps1 install-deps
 docker compose exec -e NPP_FRONTEND_URL=http://npp-frontend:5173 -e NPP_BACKEND_URL=http://npp-backend:8080 npp-backend dotnet test /app/NppTests/Npp.PlaywrightTests/Npp.PlaywrightTests.csproj --filter "FullyQualifiedName~E2E"
 ```
+
+## 4.1 Playwright podesavanja preko `.env`
+
+`TestSettings.cs` ucitava vrednosti ovim redosledom:
+1. environment varijable (`-e KEY=VALUE`)
+2. `playwright.settings.json` fajl
+3. hardcoded default vrednosti
+
+Najvaznije promenljive:
+- `NPP_PW_SLOWMO_MS` (npr. `300`, `700`, `1000`)
+- `NPP_PW_COLOR_SCHEME` (`dark`, `light`, `no-preference`)
+- `NPP_PW_HEADLESS` (`true` ili `false`)
+- `NPP_FRONTEND_URL`
+- `NPP_BACKEND_URL`
+- `NPP_PW_VIEWPORT_WIDTH`, `NPP_PW_VIEWPORT_HEIGHT`
 
 ## 4. Artefakti (screenshot/video)
 
