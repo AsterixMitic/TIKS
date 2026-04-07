@@ -35,14 +35,12 @@ public class GameHubTests
     [SetUp]
     public void SetUp()
     {
-        // GameManager dependencies
         _hubContextMock = new Mock<IHubContext<GameHub>>();
         _gameStateRepoMock = new Mock<IGameStateRepository>();
         _managerLoggerMock = new Mock<ILogger<GameManagerService>>();
         _scopeFactoryMock = new Mock<IServiceScopeFactory>();
         _hubLoggerMock = new Mock<ILogger<GameHub>>();
-
-        // IHubContext clients setup (used by GameManager for broadcasts)
+        
         var hubClients = new Mock<IHubClients>();
         var hubAllClient = new Mock<IClientProxy>();
         var hubSingleClient = new Mock<ISingleClientProxy>();
