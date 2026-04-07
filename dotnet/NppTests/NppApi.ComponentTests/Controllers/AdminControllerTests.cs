@@ -114,4 +114,37 @@ public class AdminControllerTests
         var objectResult = (ObjectResult)result;
         Assert.That(objectResult.StatusCode, Is.EqualTo(500));
     }
+
+    [Test]
+    public async Task AddPoints_CallsLeaderboardUpdateForValidPlayer()
+    {
+        _cassandraMock
+            .Setup(c => c.ExecuteAsync(It.IsAny<string>(), It.IsAny<object[]>()))
+            .Returns(Task.CompletedTask);
+
+        var playerId = Guid.NewGuid();
+        var request = new AddPointsRequest(playerId, 100, 2, 1);
+        await _controller.AddPoints(request);
+
+        _cassandraMock.Verify(
+            c => c.ExecuteAsync(
+                It.Is<string>(q => q.Contains("UPDATE player_stats")),
+                It.Is<object[]>(args => args.Contains(playerId))),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task SnapshotLeaderboards_WhenNoPlayersExist_ReturnsOk()
+    {
+        _cassandraMock
+            .Setup(c => c.QueryAsync<PlayerStatsSnapshot>(It.IsAny<string>(), It.IsAny<object[]>()))
+            .ReturnsAsync(new List<PlayerStatsSnapshot>());
+
+        var result = await _controller.SnapshotLeaderboards();
+
+        Assert.That(result, Is.TypeOf<OkObjectResult>());
+        _leaderboardServiceMock.Verify(
+            s => s.AddOrUpdateGlobalLeaderboardAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<int>()),
+            Times.Never);
+    }
 }

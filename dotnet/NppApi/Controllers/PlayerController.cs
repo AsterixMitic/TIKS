@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NppCore.Models;
 using NppCore.Services.Features.Player;
 
 namespace NppApi.Controllers;
@@ -47,6 +48,55 @@ public class PlayerController : ControllerBase
             stats.GamesLost,
             winRate
         ));
+    }
+
+    [HttpGet("me")]
+    public async Task<ActionResult<PlayerProfileResponse>> GetMyProfile()
+    {
+        var playerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(playerIdClaim) || !Guid.TryParse(playerIdClaim, out var playerId))
+            return Unauthorized("Invalid player ID");
+
+        var player = await _playerService.GetByIdAsync(playerId);
+        if (player == null)
+            return NotFound("Player not found");
+
+        return Ok(new PlayerProfileResponse(player.PlayerId, player.Username, player.Email, player.AvatarUrl, player.CreatedAt));
+    }
+
+    [HttpPut("me")]
+    public async Task<ActionResult<PlayerProfileResponse>> UpdateMyProfile([FromBody] UpdatePlayerRequest request)
+    {
+        var playerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(playerIdClaim) || !Guid.TryParse(playerIdClaim, out var playerId))
+            return Unauthorized("Invalid player ID");
+
+        if (request.Username != null)
+        {
+            var existing = await _playerService.GetByUsernameAsync(request.Username);
+            if (existing != null && existing.PlayerId != playerId)
+                return Conflict("Username is already taken");
+        }
+
+        var updated = await _playerService.UpdateAsync(playerId, request.Username, request.AvatarUrl);
+        if (updated == null)
+            return NotFound("Player not found");
+
+        return Ok(new PlayerProfileResponse(updated.PlayerId, updated.Username, updated.Email, updated.AvatarUrl, updated.CreatedAt));
+    }
+
+    [HttpDelete("me")]
+    public async Task<IActionResult> DeleteMyAccount()
+    {
+        var playerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(playerIdClaim) || !Guid.TryParse(playerIdClaim, out var playerId))
+            return Unauthorized("Invalid player ID");
+
+        var deleted = await _playerService.DeleteAsync(playerId);
+        if (!deleted)
+            return NotFound("Player not found");
+
+        return NoContent();
     }
 }
 

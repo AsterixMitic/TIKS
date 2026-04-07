@@ -114,4 +114,36 @@ public class AuthControllerTests
         var unauthorized = (UnauthorizedObjectResult)result.Result!;
         Assert.That(unauthorized.Value, Is.EqualTo("Invalid email or password"));
     }
+
+    [Test]
+    public async Task Register_WhenServiceSucceeds_CallsServiceWithCorrectArguments()
+    {
+        var request = new RegisterRequest("tester_2", "tester_2@example.com", "pass456");
+        var playerId = Guid.NewGuid();
+        var player = new PlayerEntity { PlayerId = playerId, Username = request.Username, Email = request.Email, CreatedAt = DateTimeOffset.UtcNow };
+
+        _authServiceMock
+            .Setup(s => s.RegisterAsync(request.Username, request.Email, request.Password))
+            .ReturnsAsync((player, "token-xyz"));
+
+        await _controller.Register(request);
+
+        _authServiceMock.Verify(s => s.RegisterAsync("tester_2", "tester_2@example.com", "pass456"), Times.Once);
+    }
+
+    [Test]
+    public async Task Login_WhenServiceSucceeds_CallsServiceWithCorrectArguments()
+    {
+        var request = new LoginRequest("tester_1@example.com", "pass123");
+        var playerId = Guid.NewGuid();
+        var player = new PlayerEntity { PlayerId = playerId, Username = "tester_1", Email = request.Email, CreatedAt = DateTimeOffset.UtcNow };
+
+        _authServiceMock
+            .Setup(s => s.LoginAsync(request.Email, request.Password))
+            .ReturnsAsync(((PlayerEntity Player, string Token)?)(player, "jwt-token"));
+
+        await _controller.Login(request);
+
+        _authServiceMock.Verify(s => s.LoginAsync("tester_1@example.com", "pass123"), Times.Once);
+    }
 }

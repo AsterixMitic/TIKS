@@ -68,4 +68,55 @@ public class PlayerService : IPlayerService
 
         return await GetByIdAsync(playerByUsername.PlayerId);
     }
+
+    public async Task<PlayerEntity?> UpdateAsync(Guid playerId, string? username, string? avatarUrl)
+    {
+        var player = await GetByIdAsync(playerId);
+        if (player == null) return null;
+
+        var newUsername = username ?? player.Username;
+        var newAvatarUrl = avatarUrl ?? player.AvatarUrl;
+
+        if (username != null && username != player.Username)
+        {
+            await _cassandra.ExecuteAsync(
+                "DELETE FROM players_by_username WHERE username = ?",
+                player.Username
+            );
+            await _cassandra.ExecuteAsync(
+                "INSERT INTO players_by_username (username, player_id) VALUES (?, ?)",
+                newUsername, playerId
+            );
+        }
+
+        await _cassandra.ExecuteAsync(
+            "UPDATE players SET username = ?, avatar_url = ? WHERE player_id = ?",
+            newUsername, newAvatarUrl!, playerId
+        );
+
+        player.Username = newUsername;
+        player.AvatarUrl = newAvatarUrl;
+        return player;
+    }
+
+    public async Task<bool> DeleteAsync(Guid playerId)
+    {
+        var player = await GetByIdAsync(playerId);
+        if (player == null) return false;
+
+        await _cassandra.ExecuteAsync(
+            "DELETE FROM players_by_username WHERE username = ?",
+            player.Username
+        );
+        await _cassandra.ExecuteAsync(
+            "DELETE FROM players_by_email WHERE email = ?",
+            player.Email
+        );
+        await _cassandra.ExecuteAsync(
+            "DELETE FROM players WHERE player_id = ?",
+            playerId
+        );
+
+        return true;
+    }
 }

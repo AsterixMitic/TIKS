@@ -82,6 +82,20 @@ public class PlayerMatchesService : IPlayerMatchesService
         return result;
     }
 
+    public async Task<bool> DeleteAsync(Guid playerId, string year, Guid matchId)
+    {
+        var existing = await _cassandra.QueryFirstOrDefaultAsync<PlayerMatches>(
+            "SELECT player_id FROM player_matches WHERE player_id = ? AND year = ? AND match_id = ?",
+            playerId, year, matchId
+        );
 
+        if (existing == null) return false;
 
+        await _cassandra.ExecuteAsync(
+            "DELETE FROM player_matches WHERE player_id = ? AND year = ? AND match_id = ?",
+            playerId, year, matchId
+        );
+
+        return true;
+    }
 }

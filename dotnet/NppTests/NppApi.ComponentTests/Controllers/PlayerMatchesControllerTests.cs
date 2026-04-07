@@ -167,4 +167,50 @@ public class PlayerMatchesControllerTests
             Assert.That(row.Result, Is.EqualTo("player_1"));
         });
     }
+
+    // ==================== DeleteMatchAsync ====================
+
+    [Test]
+    public async Task DeleteMatch_WhenUserClaimMissing_ReturnsUnauthorized()
+    {
+        ControllerTestContextFactory.SetUser(_controller);
+
+        var result = await _controller.DeleteMatchAsync("2026", Guid.NewGuid());
+
+        Assert.That(result, Is.TypeOf<UnauthorizedObjectResult>());
+        var unauthorized = (UnauthorizedObjectResult)result;
+        Assert.That(unauthorized.Value, Is.EqualTo("Could not identify user from token."));
+    }
+
+    [Test]
+    public async Task DeleteMatch_WhenMatchNotFound_ReturnsNotFound()
+    {
+        var playerId = Guid.NewGuid();
+        var matchId = Guid.NewGuid();
+        ControllerTestContextFactory.SetUser(_controller, playerId);
+
+        _matchesServiceMock
+            .Setup(s => s.DeleteAsync(playerId, "2026", matchId))
+            .ReturnsAsync(false);
+
+        var result = await _controller.DeleteMatchAsync("2026", matchId);
+
+        Assert.That(result, Is.TypeOf<NotFoundObjectResult>());
+    }
+
+    [Test]
+    public async Task DeleteMatch_WhenValid_ReturnsNoContent()
+    {
+        var playerId = Guid.NewGuid();
+        var matchId = Guid.NewGuid();
+        ControllerTestContextFactory.SetUser(_controller, playerId);
+
+        _matchesServiceMock
+            .Setup(s => s.DeleteAsync(playerId, "2026", matchId))
+            .ReturnsAsync(true);
+
+        var result = await _controller.DeleteMatchAsync("2026", matchId);
+
+        Assert.That(result, Is.TypeOf<NoContentResult>());
+    }
 }

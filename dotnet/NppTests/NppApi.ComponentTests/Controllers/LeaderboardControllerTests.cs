@@ -124,4 +124,83 @@ public class LeaderboardControllerTests
         var ok = (OkObjectResult)result.Result!;
         Assert.That(ok.Value, Is.EqualTo(response));
     }
+
+    [Test]
+    public async Task GetPlayerStreak_ServiceCalledWithCorrectPlayerId()
+    {
+        var playerId = Guid.NewGuid();
+        var streak = new PlayerStreakDto(playerId, 2, 7, "WIN");
+
+        _leaderboardServiceMock
+            .Setup(s => s.GetPlayerStreakAsync(playerId))
+            .ReturnsAsync(streak);
+
+        await _controller.GetPlayerStreak(playerId);
+
+        _leaderboardServiceMock.Verify(s => s.GetPlayerStreakAsync(playerId), Times.Once);
+    }
+
+    [Test]
+    public async Task GetWinsLeaderboard_WhenServiceReturnsEmpty_ReturnsOkWithEmptyList()
+    {
+        var response = new WinsLeaderboardResponse("most_wins", new List<LeaderboardEntryDto>());
+
+        _leaderboardServiceMock
+            .Setup(s => s.GetWinsLeaderboardAsync("most_wins", 10))
+            .ReturnsAsync(response);
+
+        var result = await _controller.GetWinsLeaderboard("most_wins", 10);
+
+        Assert.That(result.Result, Is.TypeOf<OkObjectResult>());
+        var ok = (OkObjectResult)result.Result!;
+        var body = ok.Value as WinsLeaderboardResponse;
+        Assert.That(body!.Entries, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetWinsLeaderboard_WhenLimitNotProvided_UsesDefaultLimit()
+    {
+        var response = new WinsLeaderboardResponse("most_wins", new List<LeaderboardEntryDto>());
+
+        _leaderboardServiceMock
+            .Setup(s => s.GetWinsLeaderboardAsync("most_wins", 10))
+            .ReturnsAsync(response);
+
+        var result = await _controller.GetWinsLeaderboard("most_wins", 10);
+
+        Assert.That(result.Result, Is.TypeOf<OkObjectResult>());
+        _leaderboardServiceMock.Verify(s => s.GetWinsLeaderboardAsync("most_wins", 10), Times.Once);
+    }
+
+    [Test]
+    public async Task GetStreakLeaderboard_WhenServiceReturnsEmpty_ReturnsOkWithEmptyList()
+    {
+        var response = new StreakLeaderboardResponse("global_all_time", new List<LeaderboardEntryDto>());
+
+        _leaderboardServiceMock
+            .Setup(s => s.GetStreakLeaderboardAsync("global_all_time", 10))
+            .ReturnsAsync(response);
+
+        var result = await _controller.GetStreakLeaderboard("global_all_time", 10);
+
+        Assert.That(result.Result, Is.TypeOf<OkObjectResult>());
+        var ok = (OkObjectResult)result.Result!;
+        var body = ok.Value as StreakLeaderboardResponse;
+        Assert.That(body!.Entries, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetStreakLeaderboard_WhenLimitNotProvided_UsesDefaultLimit()
+    {
+        var response = new StreakLeaderboardResponse("global_all_time", new List<LeaderboardEntryDto>());
+
+        _leaderboardServiceMock
+            .Setup(s => s.GetStreakLeaderboardAsync("global_all_time", 10))
+            .ReturnsAsync(response);
+
+        var result = await _controller.GetStreakLeaderboard("global_all_time", 10);
+
+        Assert.That(result.Result, Is.TypeOf<OkObjectResult>());
+        _leaderboardServiceMock.Verify(s => s.GetStreakLeaderboardAsync("global_all_time", 10), Times.Once);
+    }
 }
