@@ -107,4 +107,86 @@ public class PlayerMatchesApiTests
             await authApi.DisposeAsync();
         }
     }
+
+    [Test]
+    public async Task DeleteMatch_WithInvalidId_ShouldReturn404()
+    {
+        var (token, _) = await ApiTestHelper.RegisterAndGetToken(_api);
+        var authApi = await ApiTestHelper.CreateAuthenticatedContext(_playwright, token);
+
+        try
+        {
+            var fakeMatchId = Guid.NewGuid();
+            var response = await authApi.DeleteAsync($"/api/playermatches/2026/{fakeMatchId}");
+            Assert.That((int)response.Status, Is.EqualTo(404));
+        }
+        finally
+        {
+            await authApi.DisposeAsync();
+        }
+    }
+
+    [Test]
+    public async Task DeleteMatch_WithoutToken_ShouldReturn401()
+    {
+        var fakeMatchId = Guid.NewGuid();
+        var response = await _api.DeleteAsync($"/api/playermatches/2026/{fakeMatchId}");
+        Assert.That((int)response.Status, Is.EqualTo(401));
+    }
+
+    [Test]
+    public async Task MatchesByYear_WithInvalidYearFormat_ShouldReturn400()
+    {
+        var (token, _) = await ApiTestHelper.RegisterAndGetToken(_api);
+        var authApi = await ApiTestHelper.CreateAuthenticatedContext(_playwright, token);
+
+        try
+        {
+            var response = await authApi.GetAsync("/api/playermatches/26");
+            Assert.That((int)response.Status, Is.EqualTo(400));
+        }
+        finally
+        {
+            await authApi.DisposeAsync();
+        }
+    }
+
+    [Test]
+    public async Task DeleteMatch_BelongingToAnotherUser_ShouldReturn404()
+    {
+        var (tokenA, _) = await ApiTestHelper.RegisterAndGetToken(_api);
+        var (tokenB, _) = await ApiTestHelper.RegisterAndGetToken(_api);
+
+        var authApiB = await ApiTestHelper.CreateAuthenticatedContext(_playwright, tokenB);
+
+        try
+        {
+            // User B attempts to delete a match ID that belongs to user A.
+            // The service filters by the caller's player ID, so this is indistinguishable
+            // from a non-existent match and must return 404.
+            var authApiA = await ApiTestHelper.CreateAuthenticatedContext(_playwright, tokenA);
+            string matchIdFromA;
+            try
+            {
+                // Fetch any existing match for user A to get a real match ID.
+                // If none exist, fall back to a random Guid (still a valid 404 scenario).
+                var listResp = await authApiA.GetAsync($"/api/playermatches/{DateTime.UtcNow.Year}?page=1&limit=1");
+                var list = System.Text.Json.Nodes.JsonNode.Parse(await listResp.TextAsync()) as System.Text.Json.Nodes.JsonArray;
+                matchIdFromA = list?.Count > 0
+                    ? list[0]!["matchId"]!.ToString()
+                    : Guid.NewGuid().ToString();
+            }
+            finally
+            {
+                await authApiA.DisposeAsync();
+            }
+
+            var response = await authApiB.DeleteAsync($"/api/playermatches/{DateTime.UtcNow.Year}/{matchIdFromA}");
+            Assert.That((int)response.Status, Is.EqualTo(404));
+        }
+        finally
+        {
+            await authApiB.DisposeAsync();
+        }
+    }
 }

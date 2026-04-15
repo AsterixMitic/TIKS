@@ -22,6 +22,7 @@ export interface PlayerMatchesRequest
 export interface PlayerMatchesResponse
 {
     playerId:string;
+    matchId:string;
     opponentUsername:string;
     result:string;
     score:string;

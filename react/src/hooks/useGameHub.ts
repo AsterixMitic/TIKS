@@ -43,7 +43,6 @@ export function useGameHub(authToken: string | null) {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
 
   useEffect(() => {
-    // Don't create connection without a valid token
     if (!authToken) {
       setConnected(false);
       return;
@@ -80,13 +79,11 @@ export function useGameHub(authToken: string | null) {
       setError(message);
     });
 
-    // New reconnection-related events
     newConnection.on('ReconnectToken', (data: ReconnectTokenData) => {
       saveReconnectToken(data);
     });
 
     newConnection.on('PendingGameFound', (data: { gameId: string; playerNumber: number; playerName: string }) => {
-      // A pending game was found, attempt to reconnect
       setAppState('reconnecting');
       setIsPlayer1(data.playerNumber === 1);
       const token = getReconnectToken();
@@ -96,7 +93,6 @@ export function useGameHub(authToken: string | null) {
     });
 
     newConnection.on('NoPendingGame', () => {
-      // No pending game, clear the stored token and stay in lobby
       clearReconnectToken();
       setAppState('lobby');
     });
@@ -158,7 +154,6 @@ export function useGameHub(authToken: string | null) {
       .then(() => {
         setConnected(true);
 
-        // Check for pending game on connection
         const storedToken = getReconnectToken();
         if (storedToken) {
           setAppState('reconnecting');
@@ -177,7 +172,6 @@ export function useGameHub(authToken: string | null) {
     };
   }, [authToken]);
 
-  // Warn user when trying to leave during an active game
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();

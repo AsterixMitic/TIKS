@@ -111,3 +111,138 @@
 .match-map {
   color: #ccc;
 }
+
+.delete-match-btn {
+  background: none;
+  border: none;
+  color: #f04747;
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0 4px;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+.delete-match-btn:hover {
+  opacity: 1;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.edit-profile-btn {
+  flex: 1;
+  background: #4e5d94;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.edit-profile-btn:hover {
+  background: #5c6db0;
+}
+
+.delete-account-btn {
+  flex: 1;
+  background: #6e2929;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.delete-account-btn:hover {
+  background: #922e2e;
+}
+
+.edit-profile-form {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-profile-form input {
+  background: #2a2a3b;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #fff;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.edit-profile-form input:focus {
+  border-color: #7289da;
+}
+
+.edit-profile-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.edit-profile-buttons button {
+  flex: 1;
+  border: none;
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.edit-profile-buttons button:first-child {
+  background: #43b581;
+  color: #fff;
+}
+
+.edit-profile-buttons button:last-child {
+  background: #444;
+  color: #ccc;
+}
+
+.profile-error {
+  color: #f04747;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.confirm-delete-section {
+  width: 100%;
+  background: #2a1a1a;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 0.82rem;
+}
+
+.confirm-delete-section p {
+  margin: 0 0 6px 0;
+  color: #f04747;
+}
+
+.confirm-delete-section button {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-right: 6px;
+}
+
+.confirm-delete-btn {
+  background: #922e2e;
+  color: #fff;
+}
+
+.confirm-delete-section button:last-child {
+  background: #444;
+  color: #ccc;
+}

@@ -10,7 +10,6 @@ import type {
 
 const API_BASE = '/api/leaderboard';
 
-// Helper funkcija za dobijanje headera sa tokenom
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('jwt_token');
   const headers: HeadersInit = {
@@ -23,10 +22,6 @@ function getAuthHeaders(): HeadersInit {
   
   return headers;
 }
-
-// =====================================================
-// GLOBAL LEADERBOARD
-// =====================================================
 
 export async function getGlobalLeaderboard(
   params: GlobalLeaderboardRequest
@@ -47,10 +42,6 @@ export async function getGlobalLeaderboard(
   return response.json();
 }
 
-// =====================================================
-// WINS LEADERBOARD
-// =====================================================
-
 export async function getWinsLeaderboard(
   params?: WinsLeaderboardRequest
 ): Promise<WinsLeaderboardResponse> {
@@ -69,10 +60,6 @@ export async function getWinsLeaderboard(
   return response.json();
 }
 
-// =====================================================
-// PLAYER STREAK
-// =====================================================
-
 export async function getPlayerStreak(playerId: string): Promise<PlayerStreakDto> {
   const response = await fetch(`${API_BASE}/streak/${playerId}`);
 
@@ -85,10 +72,6 @@ export async function getPlayerStreak(playerId: string): Promise<PlayerStreakDto
 
   return response.json();
 }
-
-// =====================================================
-// LONGEST STREAK LEADERBOARD
-// =====================================================
 
 export async function getStreakLeaderboard(
   params?: StreakLeaderboardRequest

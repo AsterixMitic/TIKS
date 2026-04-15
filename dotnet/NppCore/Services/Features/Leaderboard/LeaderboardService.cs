@@ -13,10 +13,6 @@ public class LeaderboardService : ILeaderboardService
         _cassandra = cassandra;
     }
 
-    // =====================================================
-    // GLOBAL LEADERBOARD
-    // =====================================================
-
     public async Task<GlobalLeaderboardResponse> GetGlobalLeaderboardAsync(string periodType, string periodId, int limit = 10)
     {
         var cql = @"
@@ -82,10 +78,6 @@ public class LeaderboardService : ILeaderboardService
         );
     }
 
-    // =====================================================
-    // WINS LEADERBOARD
-    // =====================================================
-
     public async Task<WinsLeaderboardResponse> GetWinsLeaderboardAsync(string category = "most_wins", int limit = 10)
     {
         var cql = @"
@@ -150,10 +142,6 @@ public class LeaderboardService : ILeaderboardService
         );
     }
 
-    // =====================================================
-    // PLAYER STREAK
-    // =====================================================
-
     public async Task<PlayerStreakDto?> GetPlayerStreakAsync(Guid playerId)
     {
         var cql = @"
@@ -176,7 +164,6 @@ public class LeaderboardService : ILeaderboardService
 
     public async Task UpdatePlayerStreakAsync(Guid playerId, string username, bool won)
     {
-        // First try to read current streak
         var currentStreak = await _cassandra.QueryFirstOrDefaultAsync<PlayerStreak>(
             "SELECT player_id, current_streak, longest_streak, last_result FROM player_current_streak WHERE player_id = ?",
             playerId
@@ -188,7 +175,6 @@ public class LeaderboardService : ILeaderboardService
 
         if (currentStreak == null)
         {
-            // First match for this player
             newCurrentStreak = won ? 1 : 0;
             newLongestStreak = won ? 1 : 0;
         }
@@ -196,13 +182,11 @@ public class LeaderboardService : ILeaderboardService
         {
             if (won)
             {
-                // Win - streak continues
                 newCurrentStreak = currentStreak.CurrentStreak + 1;
                 newLongestStreak = Math.Max(newCurrentStreak, currentStreak.LongestStreak);
             }
             else
             {
-                // Loss - streak resets
                 newCurrentStreak = 0;
                 newLongestStreak = currentStreak.LongestStreak;
             }
@@ -215,16 +199,11 @@ public class LeaderboardService : ILeaderboardService
 
         await _cassandra.ExecuteAsync(cql, playerId, newCurrentStreak, newLongestStreak, newLastResult);
 
-        // If longest_streak was updated, update streak leaderboard as well
         if (currentStreak == null || newLongestStreak > currentStreak.LongestStreak)
         {
             await AddOrUpdateStreakLeaderboardAsync(GameConstants.LeaderboardCategoryGlobalAllTime, playerId, username, newLongestStreak);
         }
     }
-
-    // =====================================================
-    // LONGEST STREAK LEADERBOARD
-    // =====================================================
 
     public async Task<StreakLeaderboardResponse> GetStreakLeaderboardAsync(string category = "global_all_time", int limit = 10)
     {

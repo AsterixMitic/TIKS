@@ -12,6 +12,7 @@ public record PlayerMatchesRequest(
 public record PlayerMatchesResponse
 (
     Guid PlayerId,
+    Guid MatchId,
     string OpponentUsername,
     string Result,
     string Score,

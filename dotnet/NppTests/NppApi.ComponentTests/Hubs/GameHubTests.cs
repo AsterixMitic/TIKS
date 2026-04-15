@@ -22,7 +22,6 @@ public class GameHubTests
     private GameManagerService _gameManager = null!;
     private GameHub _hub = null!;
 
-    // Hub context mocks
     private Mock<IHubCallerClients> _callerClientsMock = null!;
     private Mock<ISingleClientProxy> _callerMock = null!;
     private Mock<IClientProxy> _allMock = null!;
@@ -58,7 +57,6 @@ public class GameHubTests
             _managerLoggerMock.Object,
             _scopeFactoryMock.Object);
 
-        // Hub caller context mocks
         _callerClientsMock = new Mock<IHubCallerClients>();
         _callerMock = new Mock<ISingleClientProxy>();
         _allMock = new Mock<IClientProxy>();
