@@ -72,6 +72,100 @@ npp/
 5. **Cilj:**
    - Prvi igrac koji postigne 5 poena pobedjuje
 
+## Testiranje
+
+Testovi se pokrecu iskljucivo kroz Docker — nije potrebna nikakva lokalna instalacija .NET SDK-a ni browser-a.
+
+### Preduslovi
+
+- Docker i Docker Compose
+- Kreiran `.env` fajl u `docker/` direktorijumu (videti ispod)
+
+### Kreiranje `.env` fajla
+
+```bash
+cd docker
+echo "Jwt__SecretKey=neki-tajni-kljuc-minimum-32-karaktera-dug" > .env
+```
+
+### Pokretanje svih testova (sa buildom)
+
+```bash
+cd docker
+docker compose --profile test up --build --abort-on-container-exit npp-tests
+```
+
+Ova komanda:
+1. Podiže infrastrukturu (Cassandra, Redis, API, Frontend)
+2. Ceka da svi servisi budu spremni
+3. Ucitava Cassandra semu (`schema.cql`)
+4. Pokrece redom sve test suite-ove i ispisuje rezultate u konzolu
+
+### Pokretanje testova bez builda (brze, ako je infrastruktura vec pokrenuta)
+
+Ako su kontejneri vec pokrenuti (`docker compose up -d`), pojedinacne suite-ove mozete pokrenuti direktno:
+
+**Komponentni testovi:**
+```bash
+docker compose exec npp-backend dotnet test /app/NppTests/NppApi.ComponentTests/NppApi.ComponentTests.csproj
+```
+
+**Playwright API testovi:**
+```bash
+docker compose exec -e NPP_BACKEND_URL=http://localhost:8080 npp-backend \
+  dotnet test /app/NppTests/Npp.PlaywrightTests/Npp.PlaywrightTests.csproj --filter "FullyQualifiedName~Api"
+```
+
+**Playwright E2E testovi** (prvi put zahteva instalaciju Chromium-a u kontejneru):
+```bash
+docker compose exec npp-backend dotnet build /app/NppTests/Npp.PlaywrightTests/Npp.PlaywrightTests.csproj
+docker compose exec npp-backend pwsh /app/NppTests/Npp.PlaywrightTests/bin/Debug/net10.0/playwright.ps1 install chromium
+docker compose exec npp-backend pwsh /app/NppTests/Npp.PlaywrightTests/bin/Debug/net10.0/playwright.ps1 install-deps
+docker compose exec \
+  -e NPP_FRONTEND_URL=http://npp-frontend:5173 \
+  -e NPP_BACKEND_URL=http://npp-backend:8080 \
+  npp-backend dotnet test /app/NppTests/Npp.PlaywrightTests/Npp.PlaywrightTests.csproj --filter "FullyQualifiedName~E2E"
+```
+
+#### Playwright podesavanja (environment varijable)
+
+| Varijabla | Primer vrednosti | Opis |
+|---|---|---|
+| `NPP_BACKEND_URL` | `http://npp-backend:8080` | URL backend API-ja |
+| `NPP_FRONTEND_URL` | `http://npp-frontend:5173` | URL frontend-a (E2E) |
+| `NPP_PW_HEADLESS` | `true` / `false` | Headless rezim (u Docker-u uvek `true`) |
+| `NPP_PW_SLOWMO_MS` | `0`, `300`, `700` | Usporavanje koraka (ms) |
+| `NPP_PW_COLOR_SCHEME` | `dark` / `light` | Tema browser-a |
+
+### Sta se testira
+
+| Suite | Tip | Opis |
+|---|---|---|
+| **Component tests** | Unit/integration | Testovi kontrolera, servisa i repozitorijuma bez spoljnih zavisnosti |
+| **Playwright API tests** | Integration | HTTP testovi svih REST endpointa prema pravom podignutom API-ju |
+| **Playwright E2E tests** | End-to-end | Browser testovi korisnickih tokova kroz UI (Chromium) |
+
+### Preuzimanje artefakata (screenshots i video snimci)
+
+Playwright snima screenshot i video svake E2E sesije. Nakon pokretanja testova:
+
+```bash
+docker cp npp-tests:/app/NppTests/Npp.PlaywrightTests/bin/Debug/net10.0/playwright-artifacts ./playwright-artifacts
+```
+
+Artefakti se nalaze u `docker/playwright-artifacts/`.
+
+### Gasenje infrastrukture
+
+```bash
+cd docker
+docker compose --profile test down -v
+```
+
+Zastavica `-v` uklanja i volumes (Cassandra i Redis podaci), sto je preporuceno izmedju test run-ova kako bi se osiguralo cisto stanje.
+
+---
+
 ## Razvoj
 
 ### Hot Reload

@@ -84,16 +84,18 @@ public class PlayerMatchesService : IPlayerMatchesService
 
     public async Task<bool> DeleteAsync(Guid playerId, string year, Guid matchId)
     {
+        // match_time is a required clustering key that precedes match_id in the primary key,
+        // so we must retrieve it first before we can issue a DELETE.
         var existing = await _cassandra.QueryFirstOrDefaultAsync<PlayerMatches>(
-            "SELECT player_id FROM player_matches WHERE player_id = ? AND year = ? AND match_id = ?",
+            "SELECT match_time FROM player_matches WHERE player_id = ? AND year = ? AND match_id = ? ALLOW FILTERING",
             playerId, year, matchId
         );
 
         if (existing == null) return false;
 
         await _cassandra.ExecuteAsync(
-            "DELETE FROM player_matches WHERE player_id = ? AND year = ? AND match_id = ?",
-            playerId, year, matchId
+            "DELETE FROM player_matches WHERE player_id = ? AND year = ? AND match_time = ? AND match_id = ?",
+            playerId, year, existing.Match_time, matchId
         );
 
         return true;
