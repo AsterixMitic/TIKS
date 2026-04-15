@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS leaderboard_by_longest_streak_by_player (
     PRIMARY KEY ((category), player_id)
 );
 
-CREATE TABLE recent_matches (
+CREATE TABLE IF NOT EXISTS recent_matches (
     period text,                 -- "2024-01" 
     match_time timestamp,
     match_id uuid,

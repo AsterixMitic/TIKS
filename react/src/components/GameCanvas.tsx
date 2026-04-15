@@ -26,11 +26,9 @@ export function GameCanvas({ gameState, onMovePaddle, isPlayer1 }: GameCanvasPro
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Center line
     ctx.strokeStyle = '#444';
     ctx.setLineDash([10, 10]);
     ctx.beginPath();
@@ -39,23 +37,19 @@ export function GameCanvas({ gameState, onMovePaddle, isPlayer1 }: GameCanvasPro
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Paddles
     ctx.fillStyle = '#fff';
     ctx.fillRect(PADDLE_OFFSET, gameState.paddle1.y, PADDLE_WIDTH, PADDLE_HEIGHT);
     ctx.fillRect(CANVAS_WIDTH - PADDLE_OFFSET - PADDLE_WIDTH, gameState.paddle2.y, PADDLE_WIDTH, PADDLE_HEIGHT);
 
-    // Ball
     ctx.fillStyle = '#ff6b6b';
     ctx.fillRect(gameState.ball.x, gameState.ball.y, BALL_SIZE, BALL_SIZE);
 
-    // Scores
     ctx.fillStyle = '#fff';
     ctx.font = '48px monospace';
     ctx.textAlign = 'center';
     ctx.fillText(String(gameState.player1?.score ?? 0), CANVAS_WIDTH / 4, 60);
     ctx.fillText(String(gameState.player2?.score ?? 0), (CANVAS_WIDTH * 3) / 4, 60);
 
-    // Player names
     ctx.font = '16px monospace';
     ctx.fillText(gameState.player1?.name ?? 'Player 1', CANVAS_WIDTH / 4, 90);
     ctx.fillText(gameState.player2?.name ?? 'Player 2', (CANVAS_WIDTH * 3) / 4, 90);

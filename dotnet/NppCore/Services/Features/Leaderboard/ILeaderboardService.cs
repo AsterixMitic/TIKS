@@ -4,10 +4,6 @@ namespace NppCore.Services.Features.Leaderboard;
 
 public interface ILeaderboardService
 {
-    // =====================================================
-    // GLOBAL LEADERBOARD
-    // =====================================================
-
     /// <summary>
     /// Returns global leaderboard for a specific period
     /// </summary>
@@ -21,10 +17,6 @@ public interface ILeaderboardService
     /// </summary>
     Task AddOrUpdateGlobalLeaderboardAsync(string periodType, string periodId, Guid playerId, string username, int rankScore);
 
-    // =====================================================
-    // WINS LEADERBOARD
-    // =====================================================
-
     /// <summary>
     /// Returns leaderboard by number of wins
     /// </summary>
@@ -36,10 +28,6 @@ public interface ILeaderboardService
     /// Adds or updates an entry in wins leaderboard
     /// </summary>
     Task AddOrUpdateWinsLeaderboardAsync(string category, Guid playerId, string username, int gamesWon);
-
-    // =====================================================
-    // PLAYER STREAK
-    // =====================================================
 
     /// <summary>
     /// Returns streak information for a player
@@ -53,10 +41,6 @@ public interface ILeaderboardService
     /// <param name="username">Player username</param>
     /// <param name="won">Whether the player won</param>
     Task UpdatePlayerStreakAsync(Guid playerId, string username, bool won);
-
-    // =====================================================
-    // LONGEST STREAK LEADERBOARD
-    // =====================================================
 
     /// <summary>
     /// Returns leaderboard by longest streak

@@ -9,6 +9,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateUser: (username: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -59,8 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('jwt_token'); // Delete token
   };
 
+  const updateUser = (username: string) => {
+    setUser(prev => prev ? { ...prev, username } : prev);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, authError, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, authError, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

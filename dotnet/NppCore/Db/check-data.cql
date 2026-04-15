@@ -1,4 +1,4 @@
-USE pong_game;
+USE npp;
 
 SELECT * FROM global_leaderboard WHERE period_type = 'MONTHLY' AND period_id = '2026-01';
 SELECT * FROM leaderboard_by_wins WHERE category = 'most_wins' LIMIT 5;

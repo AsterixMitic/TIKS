@@ -1,9 +1,5 @@
 namespace NppCore.Models;
 
-// =====================================================
-// ENTITY MODELS (mapping to Cassandra tables)
-// =====================================================
-
 /// <summary>
 /// Entity for global_leaderboard table
 /// </summary>
@@ -73,10 +69,6 @@ public class StreakLeaderboardByPlayerEntry
     public string Username { get; set; } = string.Empty;
     public int LongestStreak { get; set; }
 }
-
-// =====================================================
-// DTOs (Data Transfer Objects for API)
-// =====================================================
 
 /// <summary>
 /// DTO for displaying a leaderboard entry (generic)

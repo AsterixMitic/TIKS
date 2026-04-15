@@ -1,7 +1,3 @@
-// =====================================================
-// LEADERBOARD TYPES
-// =====================================================
-
 export interface LeaderboardEntry {
   rank: number;
   playerId: string;
@@ -32,10 +28,6 @@ export interface PlayerStreakDto {
   longestStreak: number;
   lastResult: string;
 }
-
-// =====================================================
-// REQUEST TYPES
-// =====================================================
 
 export interface GlobalLeaderboardRequest {
   periodType: string;

@@ -81,6 +81,35 @@ services:
     networks:
       - npp-network
 
+  npp-tests:
+    build:
+      context: ../dotnet
+      dockerfile: Dockerfile.test
+    container_name: npp-tests
+    profiles:
+      - test
+    environment:
+      - NPP_BACKEND_URL=http://npp-backend:8080
+      - NPP_FRONTEND_URL=http://npp-frontend:5173
+      - CASSANDRA_HOST=cassandra
+      - NPP_PW_HEADLESS=true
+      - NPP_PW_SLOWMO_MS=300
+      - NPP_PW_COLOR_SCHEME=dark
+      - NPP_PW_ARTIFACTS_DIR=playwright-artifacts
+      - NPP_PW_VIEWPORT_WIDTH=1280
+      - NPP_PW_VIEWPORT_HEIGHT=720
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      npp-backend:
+        condition: service_started
+      npp-frontend:
+        condition: service_started
+    networks:
+      - npp-network
+
 networks:
   npp-network:
     driver: bridge

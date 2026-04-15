@@ -24,7 +24,6 @@ public class GameHub : Hub
             var (game, token) = await _gameManager.CreateGameAsync(Context.ConnectionId, playerId, playerName);
             await Groups.AddToGroupAsync(Context.ConnectionId, game.Id);
 
-            // Send reconnect token to the player
             if (!string.IsNullOrEmpty(token))
             {
                 await Clients.Caller.SendAsync("ReconnectToken", new ReconnectTokenDto
@@ -58,7 +57,6 @@ public class GameHub : Hub
 
             await Groups.AddToGroupAsync(Context.ConnectionId, gameId);
 
-            // Send reconnect token to the joining player
             if (!string.IsNullOrEmpty(token))
             {
                 await Clients.Caller.SendAsync("ReconnectToken", new ReconnectTokenDto
@@ -140,7 +138,6 @@ public class GameHub : Hub
                     gameState = stateDto
                 });
 
-                // If game resumed (both players connected), notify both
                 if (game.State == GameState.Playing && _gameManager.BothPlayersConnected(result.GameId))
                 {
                     await Clients.Group(result.GameId).SendAsync("GameResumed", stateDto);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GetHistory } from '../services/playerMatchesApi';
 import type { MatchHistory } from '../types/playerMatches';
-import './MatchHistory.css'; // <--- OBAVEZNO: Importujemo CSS fajl
+import './MatchHistory.css';
 
 export const HistoryWindow: React.FC = () => {
     const [matches, setMatches] = useState<MatchHistory[]>([]);
@@ -14,7 +14,7 @@ export const HistoryWindow: React.FC = () => {
 
     const loadMatches = async () => {
         try {
-            const data = await GetHistory(1, FETCH_LIMIT); // Vuče 50 poslednjih završenih
+            const data = await GetHistory(1, FETCH_LIMIT);
             setMatches(data);
             setError('');
         } catch (err) {
@@ -27,12 +27,10 @@ export const HistoryWindow: React.FC = () => {
 
     useEffect(() => {
         loadMatches();
-        // Osvežavamo na 60 sekundi jer se istorija sporije menja nego live rezultati
         const interval = setInterval(loadMatches, 60000);
         return () => clearInterval(interval);
     }, []);
 
-    // Paginacija
     const totalPages = Math.ceil(matches.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const currentMatches = matches.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -51,7 +49,6 @@ export const HistoryWindow: React.FC = () => {
     return (
         <div className="recent-feed-container">
             <div className="feed-header">
-                {/* IZMENA: Nema više "Live" i pulsiranja */}
                 <h3 className="header-title">Poslednji Mečevi 🏁</h3>
             </div>
 

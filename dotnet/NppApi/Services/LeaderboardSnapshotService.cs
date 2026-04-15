@@ -22,10 +22,8 @@ public class LeaderboardSnapshotService : BackgroundService
     {
         _logger.LogInformation("LeaderboardSnapshotService started");
 
-        // Wait 5 seconds for the application to fully start
         await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
 
-        // Run immediately on startup
         if (!stoppingToken.IsCancellationRequested)
         {
             _logger.LogInformation("Running initial leaderboard snapshot on startup...");
@@ -39,12 +37,10 @@ public class LeaderboardSnapshotService : BackgroundService
             }
         }
 
-        // Then run daily
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                // Calculate time until next run (midnight UTC)
                 var now = DateTimeOffset.UtcNow;
                 var nextRun = now.Date.AddDays(1).AddHours(0);
                 var delay = nextRun - now;

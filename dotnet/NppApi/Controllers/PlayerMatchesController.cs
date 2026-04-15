@@ -41,7 +41,7 @@ public class PlayerMatchesController : ControllerBase
 
         var matches= await _playerMatchesService.GetByYearAsync(year,playerId,page,limit);
 
-        var respone= matches.Select(match=>new PlayerMatchesResponse(match.PlayerId, match.OpponentUsername,match.Score, match.Result,match.Match_time));
+        var respone= matches.Select(match=>new PlayerMatchesResponse(match.PlayerId, match.MatchId, match.OpponentUsername, match.Result, match.Score, match.Match_time));
 
         return Ok(respone);
     }
@@ -60,4 +60,21 @@ public class PlayerMatchesController : ControllerBase
         return Ok(respone);
     }
 
+    [Authorize]
+    [HttpDelete("{year}/{matchId:guid}")]
+    public async Task<IActionResult> DeleteMatchAsync([FromRoute] string year, [FromRoute] Guid matchId)
+    {
+        var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdString))
+            return Unauthorized("Could not identify user from token.");
+
+        if (!Guid.TryParse(userIdString, out Guid playerId))
+            return Unauthorized("Invalid token.");
+
+        var deleted = await _playerMatchesService.DeleteAsync(playerId, year, matchId);
+        if (!deleted)
+            return NotFound("Match not found.");
+
+        return NoContent();
+    }
 }

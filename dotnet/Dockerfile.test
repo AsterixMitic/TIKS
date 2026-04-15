@@ -1,0 +1,42 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+
+WORKDIR /app
+
+# ── Layer 1: System tools + Playwright deps (rarely changes — cached) ──
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl python3 python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+RUN pip3 install --break-system-packages cqlsh
+RUN dotnet tool install --global PowerShell
+ENV PATH="$PATH:/root/.dotnet/tools"
+
+# ── Layer 2: NuGet restore (changes only when .csproj changes) ──
+COPY *.slnx ./
+COPY NppCore/*.csproj ./NppCore/
+COPY NppApi/*.csproj ./NppApi/
+COPY NppTests/NppApi.ComponentTests/*.csproj ./NppTests/NppApi.ComponentTests/
+COPY NppTests/Npp.PlaywrightTests/*.csproj ./NppTests/Npp.PlaywrightTests/
+RUN dotnet restore
+
+# ── Layer 3: Install Playwright browsers (changes only when Playwright NuGet version changes) ──
+# Build just enough to generate playwright.ps1, then install Chromium.
+# We create minimal placeholder files so dotnet build can succeed for the test project.
+RUN mkdir -p NppCore NppApi \
+    NppTests/NppApi.ComponentTests \
+    NppTests/Npp.PlaywrightTests && \
+    for dir in NppCore NppApi NppTests/NppApi.ComponentTests NppTests/Npp.PlaywrightTests; do \
+      echo "" > "$dir/Placeholder.cs"; \
+    done && \
+    dotnet build NppTests/Npp.PlaywrightTests/Npp.PlaywrightTests.csproj -c Debug 2>/dev/null || true
+RUN pwsh NppTests/Npp.PlaywrightTests/bin/Debug/net10.0/playwright.ps1 install chromium
+RUN pwsh NppTests/Npp.PlaywrightTests/bin/Debug/net10.0/playwright.ps1 install-deps
+
+# ── Layer 4: Copy real source and build (changes on every code edit — fast) ──
+COPY . .
+RUN dotnet build NppTests/Npp.PlaywrightTests/Npp.PlaywrightTests.csproj -c Debug
+RUN dotnet build NppTests/NppApi.ComponentTests/NppApi.ComponentTests.csproj -c Debug
+
+# Ensure entrypoint script is executable and has Unix line endings
+RUN chmod +x /app/run-tests.sh && sed -i 's/\r$//' /app/run-tests.sh
+
+ENTRYPOINT ["/app/run-tests.sh"]

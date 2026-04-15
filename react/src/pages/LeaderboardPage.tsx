@@ -28,21 +28,17 @@ export function LeaderboardPage() {
     return `MONTHLY|${year}-${month}`;
   });
 
-  // Data states
   const [globalData, setGlobalData] = useState<GlobalLeaderboardResponse | null>(null);
   const [winsData, setWinsData] = useState<WinsLeaderboardResponse | null>(null);
   const [streaksData, setStreaksData] = useState<StreakLeaderboardResponse | null>(null);
   const [playerStreak, setPlayerStreak] = useState<PlayerStreakDto | null>(null);
 
-  // Loading states
   const [loading, setLoading] = useState(false);
   const [streakLoading, setStreakLoading] = useState(false);
 
-  // Error states
   const [error, setError] = useState<string | null>(null);
   const [streakError, setStreakError] = useState<string | null>(null);
 
-  // Fetch player streak
   useEffect(() => {
     if (!user?.playerId) return;
 
@@ -62,7 +58,6 @@ export function LeaderboardPage() {
     fetchPlayerStreak();
   }, [user?.playerId]);
 
-  // Fetch leaderboard data based on active tab
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);

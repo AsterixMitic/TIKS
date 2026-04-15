@@ -20,7 +20,6 @@ export async function login(request: LoginRequest): Promise<User> {
   }
 
   const data = await response.json();
-  // Save token to localStorage
   localStorage.setItem('jwt_token', data.token);
   return data;
 }
@@ -43,7 +42,6 @@ export async function register(request: RegisterRequest): Promise<User> {
   }
 
   const data = await response.json();
-  // Save token to localStorage
   localStorage.setItem('jwt_token', data.token);
   return data;
 }

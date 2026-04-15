@@ -106,16 +106,16 @@ public class AdminController : ControllerBase
     {
         try
         {
-            // Update counter table
+            // Update counter table (counter columns require long values)
             await _cassandra.ExecuteAsync(
                 @"UPDATE player_stats
                   SET total_points = total_points + ?,
                       games_won = games_won + ?,
                       games_lost = games_lost + ?
                   WHERE player_id = ?",
-                request.Points,
-                request.Wins,
-                request.Losses,
+                (long)request.Points,
+                (long)request.Wins,
+                (long)request.Losses,
                 request.PlayerId
             );
 

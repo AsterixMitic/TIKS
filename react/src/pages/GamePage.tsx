@@ -7,7 +7,6 @@ import { GameCanvas } from '../components/GameCanvas'
 
 export function GamePage() {
   const { user, logout } = useAuth();
-  // Get token - it changes when user logs in/out
   const token = localStorage.getItem('jwt_token');
 
   const {
@@ -29,7 +28,6 @@ export function GamePage() {
   const playerName = user?.username ?? 'Player';
   const playerId = user?.playerId ?? '';
 
-  // Show login prompt if not authenticated
   if (!token || !user) {
     return (
       <div className="auth-required">

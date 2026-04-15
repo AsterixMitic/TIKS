@@ -1,0 +1,43 @@
+name: CI - Build & Test
+
+on:
+  push:
+    branches: [develop, main, testing]
+  pull_request:
+    branches: [develop, main, testing]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docker
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          echo "Jwt__SecretKey=ci-test-secret-key-minimum-32-characters-long" > .env
+
+      - name: Run all tests
+        run: |
+          docker compose --profile test up --build --abort-on-container-exit npp-tests
+
+      - name: Copy Playwright artifacts
+        if: always()
+        run: |
+          docker cp npp-tests:/app/NppTests/Npp.PlaywrightTests/bin/Debug/net10.0/playwright-artifacts ./playwright-artifacts 2>/dev/null || true
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: docker/playwright-artifacts
+          if-no-files-found: ignore
+
+      - name: Stop infrastructure
+        if: always()
+        run: docker compose --profile test down -v

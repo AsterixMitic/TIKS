@@ -37,3 +37,7 @@ public class PlayerInfo
     public Guid PlayerId { get; set; }
     public string Username { get; set; } = string.Empty;
 }
+
+public record UpdatePlayerRequest(string? Username, string? AvatarUrl);
+
+public record PlayerProfileResponse(Guid PlayerId, string Username, string Email, string? AvatarUrl, DateTimeOffset CreatedAt);

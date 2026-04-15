@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="NppApi/NppApi.csproj" />
   <Project Path="NppCore/NppCore.csproj" />
+  <Project Path="NppTests/NppApi.ComponentTests/NppApi.ComponentTests.csproj" />
+  <Project Path="NppTests/Npp.PlaywrightTests/Npp.PlaywrightTests.csproj" />
 </Solution>
