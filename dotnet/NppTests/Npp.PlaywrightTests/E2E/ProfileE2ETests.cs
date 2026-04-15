@@ -64,7 +64,7 @@ public class ProfileE2ETests : E2ETestBase
         var suffix = Guid.NewGuid().ToString("N")[..8];
 
         // Register user A via API (to occupy their username)
-        var playwright = await Playwright.CreateAsync();
+        var playwright = await Microsoft.Playwright.Playwright.CreateAsync();
         var api = await playwright.APIRequest.NewContextAsync(new APIRequestNewContextOptions
         {
             BaseURL = TestSettings.BackendUrl
