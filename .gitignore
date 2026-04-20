@@ -113,3 +113,4 @@ logs/
 *.sqlite
 *.sqlite3
 /.claude/
+/docker/playwright-artifacts/

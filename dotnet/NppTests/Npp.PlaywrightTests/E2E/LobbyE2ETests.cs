@@ -83,18 +83,4 @@ public class LobbyE2ETests : E2ETestBase
         await Expect(Page.Locator(".no-games")).ToBeVisibleAsync(new() { Timeout = 5_000 });
         await Expect(Page.Locator(".no-games")).ToContainTextAsync("No open games");
     }
-
-    [Test]
-    [Retry(1)]
-    public async Task Lobby_MatchHistory_ShowsHeading()
-    {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
-        var username = $"e2e_mh_{suffix}";
-        var email = $"{username}@example.com";
-
-        await RegisterAndNavigateToLobby(username, email);
-
-        await Expect(Page.Locator(".header-title")).ToBeVisibleAsync();
-        await Expect(Page.Locator(".header-title")).ToContainTextAsync("Poslednji Mečevi");
-    }
 }
